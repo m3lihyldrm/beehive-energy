@@ -1,5 +1,5 @@
 /**
- * Circular City - Konya Akıllı Şehir Durakları Demo Veri Seti
+ * BeeHive - Konya Akıllı Şehir Durakları Demo Veri Seti
  * NOT: Bu veriler pilot demo ve simülasyon amaçlıdır. Gerçek donanım bağlantısı sonraki aşamada planlanmaktadır.
  */
 
@@ -281,11 +281,11 @@ export const stationsData = [
         internalTemperature: 21.9,
         tamperSensor: "Normal - Kilit Güvenli"
       },
-      inverterStatus: "Yüksek Güç Modu - Şebekeye Aktif Satış",
-      inverterCommands: ["GRID_INJECTION_MAX", "SMART_EV_ALLOWED"],
+      inverterStatus: "Yüksek Güç Modu - Çift Yönlü Mikro-Şebeke Desteği (Simülasyon)",
+      inverterCommands: ["GRID_SUPPORT_SYNC", "SMART_EV_ALLOWED"],
       securityCameras: {
         activeCount: 4,
-        systemHealth: "Tüm Açılar Aktif - AI Güvenlik Analitiği",
+        systemHealth: "Tüm Açılar Aktif - Kural Tabanlı Güvenlik Analitiği",
         blindSpotWarning: false
       },
       technicalDiagnostics: "Güneş ışınımı 880 W/m². Batarya sıcaklığı ideal termal aralıkta (22°C).",

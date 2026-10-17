@@ -36,51 +36,45 @@ const MapUpdater: React.FC<{
 };
 
 /**
- * Sade, yüksek kaliteli, marka uyumlu Leaflet DivIcon üretici
- * Aktif: Forest yeşili (#1F5A43) + beyaz merkez
- * Sınırlı: Sıcak amber (#B7791F)
- * Bakım: Kırmızı (#B94040)
- * Bağlantı yok: Koyu gri (#5D665E)
+ * BeeHive Altıgen Petek Formunda Leaflet DivIcon Üretici
+ * Pin Renkleri:
+ * - Aktif: Yeşil (#1F5A43)
+ * - Sınırlı: Amber (#D59B2E)
+ * - Bakımda: Kırmızı (#B94040)
+ * - Bağlantı yok: Gri (#5D665E)
  */
 const createStationIcon = (status: StationStatus, isSelected: boolean) => {
-  let bgColor = '#1F5A43'; // Forest yeşili
+  let bgColor = '#1F5A43'; // Aktif: yeşil
 
   if (status === 'sinirli') {
-    bgColor = '#B7791F'; // Sıcak amber
+    bgColor = '#D59B2E'; // Sınırlı: amber
   } else if (status === 'bakimda') {
-    bgColor = '#B94040'; // Kırmızı
+    bgColor = '#B94040'; // Bakımda: kırmızı
   } else if (status === 'baglanti_yok') {
-    bgColor = '#5D665E'; // Koyu gri
+    bgColor = '#5D665E'; // Bağlantı yok: gri
   }
 
-  const size = isSelected ? 36 : 28;
+  const width = isSelected ? 40 : 32;
+  const height = isSelected ? 44 : 36;
 
-  const html = `
-    <div style="position: relative; display: flex; align-items: center; justify-content: center; width: ${size}px; height: ${size}px;">
-      <div style="
-        width: ${size}px;
-        height: ${size}px;
-        background-color: ${bgColor};
-        border: 2.5px solid #ffffff;
-        box-shadow: 0 2px 8px rgba(24, 32, 25, 0.25);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: transform 0.15s ease;
-        ${isSelected ? 'transform: scale(1.15); box-shadow: 0 0 0 3px rgba(31, 90, 67, 0.3);' : ''}
-      ">
-        <div style="width: ${size * 0.36}px; height: ${size * 0.36}px; background-color: #ffffff; border-radius: 50%;"></div>
-      </div>
-    </div>
+  const svg = `
+    <svg width="${width}" height="${height}" viewBox="0 0 36 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 6px rgba(24,32,25,0.35)); transition: transform 0.2s ease;">
+      <!-- Dış Altıgen Petek Çerçevesi -->
+      <polygon points="18,2 34,11 34,29 18,38 2,29 2,11" fill="${bgColor}" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+      ${isSelected ? '<polygon points="18,6 31,13 31,27 18,34 5,27 5,13" stroke="#FDF3D9" stroke-width="1.2" fill="none"/>' : ''}
+      <!-- İç Petek Çekirdeği -->
+      <polygon points="18,10 26,14.5 26,24.5 18,29 10,24.5 10,14.5" fill="#ffffff" fill-opacity="0.95" stroke="${bgColor}" stroke-width="1" stroke-linejoin="round"/>
+      <!-- Merkez Enerji Noktası (Bal sarısı / durum rengi) -->
+      <circle cx="18" cy="19.5" r="3.2" fill="${bgColor === '#1F5A43' ? '#F3B33D' : bgColor}"/>
+    </svg>
   `;
 
   return L.divIcon({
     className: 'custom-station-pin',
-    html: html,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    popupAnchor: [0, -size / 2],
+    html: `<div style="display:flex;align-items:center;justify-content:center;${isSelected ? 'transform:scale(1.15);' : ''}">${svg}</div>`,
+    iconSize: [width, height],
+    iconAnchor: [width / 2, height / 2],
+    popupAnchor: [0, -height / 2],
   });
 };
 
@@ -230,22 +224,22 @@ export const MapModule: React.FC<MapModuleProps> = ({
       {/* Harita Lejandı (Alt Sol Köşede Sade Kutu) */}
       <div className="absolute bottom-5 left-4 z-[500] bg-white/95 border border-[#DDE1DA] p-3 rounded-lg shadow-subtle text-xs space-y-1.5 pointer-events-auto max-w-[200px]">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-[#5D665E] block pb-1 border-b border-[#DDE1DA]">
-          Durak Durumu
+          Durak Durumu (Petek Pin)
         </span>
         <div className="flex items-center gap-2 text-[#182019]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#1F5A43] shrink-0" />
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#1F5A43"><polygon points="12,2 22,7 22,17 12,22 2,17 2,7"/></svg>
           <span>Hizmet Aktif</span>
         </div>
         <div className="flex items-center gap-2 text-[#182019]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#B7791F] shrink-0" />
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#D59B2E"><polygon points="12,2 22,7 22,17 12,22 2,17 2,7"/></svg>
           <span>Sınırlı Mod</span>
         </div>
         <div className="flex items-center gap-2 text-[#182019]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#B94040] shrink-0" />
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#B94040"><polygon points="12,2 22,7 22,17 12,22 2,17 2,7"/></svg>
           <span>Bakımda</span>
         </div>
         <div className="flex items-center gap-2 text-[#182019]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#5D665E] shrink-0" />
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#5D665E"><polygon points="12,2 22,7 22,17 12,22 2,17 2,7"/></svg>
           <span>Bağlantı Yok</span>
         </div>
       </div>

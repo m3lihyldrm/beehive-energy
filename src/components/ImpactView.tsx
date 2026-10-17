@@ -24,11 +24,7 @@ const mockDailyEnergyData = [
   { hour: '20:00', solarProduction: 0.0, consumption: 2.5, batterySoc: 76 },
 ];
 
-interface ImpactViewProps {
-  tourStep?: number;
-}
-
-export const ImpactView: React.FC<ImpactViewProps> = ({ tourStep }) => {
+export const ImpactView: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10 animate-in fade-in duration-200">
       {/* Başlık */}
@@ -45,12 +41,7 @@ export const ImpactView: React.FC<ImpactViewProps> = ({ tourStep }) => {
       </div>
 
       {/* 1. BÖLÜM: BİR DURAĞIN GÜNLÜK ENERJİ DÖNGÜSÜ */}
-      <div
-        id="tour-step-7-impact"
-        className={`bg-white border border-[#DDE1DA] rounded-2xl p-6 sm:p-8 space-y-4 shadow-subtle transition-all duration-300 ${
-          tourStep === 7 ? 'tour-highlight ring-4 ring-[#1F5A43]/20' : ''
-        }`}
-      >
+      <div className="bg-white border border-[#DDE1DA] rounded-2xl p-6 sm:p-8 space-y-4 shadow-subtle transition-all duration-300">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#DDE1DA] pb-3">
           <div>
             <h2 className="text-base font-bold text-[#182019]">Bir Durağın Günlük Enerji Döngüsü</h2>
@@ -114,7 +105,7 @@ export const ImpactView: React.FC<ImpactViewProps> = ({ tourStep }) => {
             Güneş panelleri ve batarya depolamasıyla sağlanan ortalama temiz enerji oranı.
           </p>
           <div className="text-[10px] text-[#5D665E] pt-2 border-t border-[#DDE1DA]">
-            Simülasyon verisi · 6 pilot durak ortalaması
+            Simülasyon verisi · Örnek durak ağı ortalaması
           </div>
         </div>
 
@@ -146,7 +137,7 @@ export const ImpactView: React.FC<ImpactViewProps> = ({ tourStep }) => {
             Şebeke çekişi yerine yerel güneş üretimiyle önlenen tahmini yıllık CO₂ eşdeğeri.
           </p>
           <div className="text-[10px] text-[#5D665E] pt-2 border-t border-[#DDE1DA]">
-            Simülasyon verisi · Tahmini modelleme
+            Tahmini değer; simülasyon verisi, sistem sınırı ve varsayılan emisyon faktörüne bağlıdır.
           </div>
         </div>
       </div>
@@ -155,7 +146,7 @@ export const ImpactView: React.FC<ImpactViewProps> = ({ tourStep }) => {
       <div className="p-4 rounded-xl bg-[#EFF0EB] border border-[#DDE1DA] text-xs text-[#5D665E] leading-relaxed flex items-center gap-2">
         <Info className="w-4 h-4 text-[#1F5A43] shrink-0" />
         <span>
-          Bu sayfada sunulan tüm etki metrikleri pilot konsept simülasyonudur. Sahadaki gerçek enerji ve karbon tasarruf ölçümleri faz 2 donanım entegrasyonu sonrasında yayınlanacaktır.
+          Bu sayfada sunulan tüm etki metrikleri örnek senaryo simülasyonudur. Tahmini değer; simülasyon verisi, sistem sınırı ve varsayılan emisyon faktörüne bağlıdır. Sahadaki fiziksel ölçümler donanım devreye alma süreci sonrasında sunulacaktır.
         </span>
       </div>
     </div>

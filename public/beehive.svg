@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Outer Hexagon (BeeHive Frame in Forest Green) -->
+  <polygon points="32,4 56,18 56,46 32,60 8,46 8,18" fill="#1F5A43" stroke="#174634" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Inner Subtle Hexagon Ring -->
+  <polygon points="32,10 50,21 50,43 32,54 14,43 14,21" fill="#E5F0EA" fill-opacity="0.15" stroke="#E5F0EA" stroke-width="1.5" stroke-opacity="0.4" stroke-linejoin="round"/>
+  <!-- Honey Energy Core (Warm Golden Yellow / Amber Hexagonal Star & Energy Pulse) -->
+  <polygon points="32,18 42,24 42,40 32,46 22,40 22,24" fill="#F3B33D" stroke="#D59B2E" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- Central Dynamic Energy Lightning Accent -->
+  <path d="M34 23L27 34H33L30 43L39 31H33L36 23H34Z" fill="#FFFFFF" stroke="#D59B2E" stroke-width="0.5" stroke-linejoin="round"/>
+  <!-- Small Ambient Energy Sparkles -->
+  <circle cx="32" cy="14" r="1.5" fill="#FDF3D9"/>
+  <circle cx="46" cy="32" r="1.5" fill="#FDF3D9"/>
+  <circle cx="18" cy="32" r="1.5" fill="#FDF3D9"/>
+</svg>

@@ -8,33 +8,19 @@ import { StationDrawer } from './StationDrawer';
 import { FeedbackModal } from './FeedbackModal';
 import { PrivacyConsentModal } from './PrivacyConsentModal';
 import { Info, CheckCircle2 } from 'lucide-react';
+import { trackEvent } from '../services/analytics';
 
 interface CityMapViewProps {
   stations: PublicStation[];
   onSelectStation?: (station: PublicStation) => void;
-  tourStep?: number;
 }
 
 export const CityMapView: React.FC<CityMapViewProps> = ({
   stations: initialStations,
-  tourStep
 }) => {
   const [stations, setStations] = useState<PublicStation[]>(initialStations);
   const [selectedStation, setSelectedStation] = useState<PublicStation | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-
-  // Jüri sunumu adımları için otomatik durak açma / kapatma
-  React.useEffect(() => {
-    if (tourStep === 4 || tourStep === 5) {
-      const campus = stations.find((s) => s.stationId === 'ST-KNY-01') || stations[0];
-      if (campus) {
-        setSelectedStation(campus);
-        setDrawerOpen(true);
-      }
-    } else if (tourStep === 3) {
-      setDrawerOpen(false);
-    }
-  }, [tourStep, stations]);
   const [feedbackStation, setFeedbackStation] = useState<PublicStation | null>(null);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
@@ -115,12 +101,14 @@ export const CityMapView: React.FC<CityMapViewProps> = ({
       if (filters.powerOutlet && station.powerOutlets === 0) return false;
       if (filters.hvacActive && !station.hvacStatus.includes('Aktif')) return false;
       if (filters.accessible && !station.accessibility.includes('Uyumlu')) return false;
+      if (filters.ledLighting && station.status === 'bakimda') return false;
+      if (filters.screenDisplay && station.status === 'bakimda') return false;
       return true;
     });
   }, [stations, filters]);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#F6F6F2]">
+    <div className="flex-1 flex flex-col min-h-0 bg-[#F6F6F2] relative">
       {/* Konum İzni Reddedildiğinde Bilgilendirme */}
       {locationNotice && (
         <div className="bg-white border-b border-[#DDE1DA] px-4 py-2 text-xs text-[#5D665E] flex items-center justify-between">
@@ -150,12 +138,7 @@ export const CityMapView: React.FC<CityMapViewProps> = ({
       />
 
       {/* Harita veya Yedek Liste Görünümü */}
-      <div
-        id="tour-step-3-map"
-        className={`flex-1 relative min-h-[500px] transition-all duration-300 ${
-          tourStep === 3 ? 'ring-2 ring-[#1F5A43]/40' : ''
-        }`}
-      >
+      <div className="flex-1 relative min-h-[500px]">
         {viewMode === 'map' ? (
           <MapModule
             stations={filteredStations}
@@ -163,6 +146,7 @@ export const CityMapView: React.FC<CityMapViewProps> = ({
             onSelectStation={(st) => {
               setSelectedStation(st);
               setDrawerOpen(true);
+              trackEvent('map_station_viewed', { stationId: st.stationId, stationName: st.name });
             }}
             userLocation={userLocation}
             onSwitchToFallback={() => setViewMode('list')}
@@ -173,6 +157,7 @@ export const CityMapView: React.FC<CityMapViewProps> = ({
             onSelectStation={(st) => {
               setSelectedStation(st);
               setDrawerOpen(true);
+              trackEvent('map_station_viewed', { stationId: st.stationId, stationName: st.name });
             }}
             onOpenFeedback={(st) => {
               setFeedbackStation(st);
@@ -181,6 +166,21 @@ export const CityMapView: React.FC<CityMapViewProps> = ({
             onSwitchToMap={() => setViewMode('map')}
           />
         )}
+      </div>
+
+      {/* Mobilde "En Yakın Durak" İçin Sabit Alt Buton */}
+      <div className="sm:hidden fixed bottom-4 left-4 right-4 z-[400] pointer-events-auto shadow-elevated">
+        <button
+          onClick={handleTriggerNearest}
+          className={`w-full py-3 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 border transition ${
+            isNearestActive
+              ? 'bg-[#1F5A43] text-white border-[#174634]'
+              : 'bg-white text-[#182019] border-[#DDE1DA] active:bg-[#F6F6F2]'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-[#F3B33D]" />
+          <span>{isNearestActive ? 'Tüm Durakları Göster' : 'En Yakındaki Durağı Bul'}</span>
+        </button>
       </div>
 
       {/* Detay Paneli */}
@@ -193,7 +193,6 @@ export const CityMapView: React.FC<CityMapViewProps> = ({
           setFeedbackStation(st);
           setFeedbackModalOpen(true);
         }}
-        tourStep={tourStep}
       />
 
       {/* Geri Bildirim Modal */}

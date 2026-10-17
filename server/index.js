@@ -4,18 +4,25 @@ import { stationsData, feedbackSubmissions, initialAiRecommendations } from './d
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 
-app.use(cors());
+app.use(cors({ origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN }));
 app.use(express.json());
 
-// Demo Admin Token sabiti
-export const DEMO_ADMIN_TOKEN = "demo-admin-jwt-token-circularcity-2026";
-export const DEMO_ADMIN_EMAIL = "admin@circularcity.demo";
-export const DEMO_ADMIN_PASSWORD = "Demo123!";
+// Demo Admin Token sabiti (Ortam değişkeni desteği)
+export const DEMO_ADMIN_TOKEN = process.env.DEMO_ADMIN_TOKEN || "beehive-admin-jwt-token-2026";
+export const DEMO_ADMIN_EMAIL = process.env.DEMO_ADMIN_EMAIL || "admin@beehive.energy";
+export const DEMO_ADMIN_PASSWORD = process.env.DEMO_ADMIN_PASSWORD || "Demo123!";
 
-// In-memory state for admin actions
+// Resend E-posta Gönderim Yapılandırması
+export const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+export const CONTACT_EMAIL_TO = process.env.CONTACT_EMAIL_TO || 'iletisim@beehive.energy';
+export const CONTACT_EMAIL_FROM = process.env.CONTACT_EMAIL_FROM || 'BeeHive Demo <onboarding@resend.dev>';
+
+// In-memory state for admin actions & contact requests
 export let aiRecommendations = [...initialAiRecommendations];
 export let feedbacks = [...feedbackSubmissions];
+export let demoRequests = [];
 export let eventLogs = [
   {
     id: "LOG-01",
@@ -26,8 +33,8 @@ export let eventLogs = [
   {
     id: "LOG-02",
     timestamp: "2026-09-26T09:00:00Z",
-    type: "AI_SUGGESTION",
-    message: "AI Enerji Asistanı: Güneş ışınımı pik saati tespit edildi."
+    type: "ALGO_SUGGESTION",
+    message: "Enerji Karar Destek Algoritması: Güneş ışınımı pik saati tespit edildi."
   }
 ];
 
@@ -50,7 +57,7 @@ export const faqsData = [
   {
     id: "faq-4",
     question: "Haritadaki veriler gerçek zamanlı mı?",
-    answer: "Haritadaki tüm durak, enerji üretimi ve batarya verileri pilot konsept simülasyonudur. Gerçek donanım bağlantısı sonraki aşamada planlanmaktadır."
+    answer: "Haritadaki tüm durak, enerji üretimi ve batarya verileri referans senaryo ve konsept simülasyonudur. Sahadaki gerçek fiziksel batarya, PV ve şebeke donanım bağlantısı sonraki aşamada planlanmaktadır."
   },
   {
     id: "faq-5",
@@ -65,7 +72,7 @@ export const faqsData = [
   {
     id: "faq-7",
     question: "Şebekeye enerji aktarımı nasıl olur?",
-    answer: "Şebeke aktarımı; ilgili mevzuat, dağıtım şirketi bağlantısı ve teknik uygunluğa bağlı planlanan özelliktir. Fazla üretilen temiz enerjinin çift yönlü sayaçla mikro şebekeye verilmesi hedeflenmektedir."
+    answer: "Şebeke aktarımı; ilgili mevzuat, dağıtım şirketi bağlantısı ve teknik uygunluğa bağlı planlanan bir özelliktir. Fazla üretilen temiz enerjinin çift yönlü sayaçla mikro şebekeye verilmesi hedeflenmektedir."
   },
   {
     id: "faq-8",
@@ -128,8 +135,21 @@ export function requireAdminAuth(req, res, next) {
 }
 
 // ==========================================
-// HALK (PUBLIC) API ENDPOINTS
+// HALK (PUBLIC) & SAĞLIK API ENDPOINTS
 // ==========================================
+
+/**
+ * GET /api/health
+ * Servis sağlık ve durum kontrol uç noktası.
+ */
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'beehive-energy-api',
+    mode: 'simulation',
+    timestamp: new Date().toISOString()
+  });
+});
 
 /**
  * GET /api/public/stations
@@ -261,6 +281,129 @@ app.post('/api/public/feedback', (req, res) => {
 });
 
 /**
+ * POST /api/contact/demo-request
+ * Kurumsal demo talebi alma ve e-posta iletimi
+ */
+app.post('/api/contact/demo-request', async (req, res) => {
+  const { fullName, organization, email, organizationType, interest, message } = req.body || {};
+
+  const errors = [];
+  if (!fullName || typeof fullName !== 'string' || !fullName.trim()) {
+    errors.push('fullName zorunludur.');
+  }
+  if (!organization || typeof organization !== 'string' || !organization.trim()) {
+    errors.push('organization zorunludur.');
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || typeof email !== 'string' || !emailRegex.test(email.trim())) {
+    errors.push('email geçerli formatta zorunludur.');
+  }
+  if (!organizationType || typeof organizationType !== 'string' || !organizationType.trim()) {
+    errors.push('organizationType zorunludur.');
+  }
+  if (!message || typeof message !== 'string' || message.trim().length < 20) {
+    errors.push('message en az 20 karakter zorunludur.');
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      error: 'Doğrulama hatası',
+      details: errors
+    });
+  }
+
+  const newDemoRequest = {
+    id: `DEMO-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`,
+    fullName: fullName.trim(),
+    organization: organization.trim(),
+    email: email.trim().toLowerCase(),
+    organizationType: organizationType.trim(),
+    interest: (interest || 'Genel Demo ve Bilgi').trim(),
+    message: message.trim(),
+    createdAt: new Date().toISOString(),
+    status: 'Alındı'
+  };
+
+  demoRequests.unshift(newDemoRequest);
+
+  // Resend API üzerinden e-posta gönderimi (Varsa)
+  let emailDelivered = false;
+  if (RESEND_API_KEY) {
+    try {
+      const emailHtml = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #dde1da; border-radius: 12px; background-color: #ffffff;">
+          <div style="border-bottom: 2px solid #1F5A43; padding-bottom: 12px; margin-bottom: 16px;">
+            <h2 style="color: #1F5A43; margin: 0; font-size: 20px;">BeeHive Kurumsal Demo Talebi</h2>
+            <p style="color: #5D665E; margin: 4px 0 0 0; font-size: 13px;">Tarih: ${new Date().toLocaleString('tr-TR')}</p>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 16px;">
+            <tr>
+              <td style="padding: 8px 0; color: #5D665E; width: 140px;"><strong>Talep Eden:</strong></td>
+              <td style="padding: 8px 0; color: #182019;">${newDemoRequest.fullName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #5D665E;"><strong>Kurum:</strong></td>
+              <td style="padding: 8px 0; color: #182019;">${newDemoRequest.organization}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #5D665E;"><strong>Kurum Türü:</strong></td>
+              <td style="padding: 8px 0; color: #182019;">${newDemoRequest.organizationType}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #5D665E;"><strong>E-Posta:</strong></td>
+              <td style="padding: 8px 0; color: #182019;"><a href="mailto:${newDemoRequest.email}">${newDemoRequest.email}</a></td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #5D665E;"><strong>İlgi Alanı:</strong></td>
+              <td style="padding: 8px 0; color: #182019;">${newDemoRequest.interest}</td>
+            </tr>
+          </table>
+          <div style="background-color: #f6f6f2; padding: 14px; border-radius: 8px; border: 1px solid #dde1da;">
+            <p style="margin: 0 0 6px 0; font-size: 12px; color: #5D665E; font-weight: bold; text-transform: uppercase;">Talep Mesajı:</p>
+            <p style="margin: 0; color: #182019; font-size: 14px; line-height: 1.5;">${newDemoRequest.message}</p>
+          </div>
+          <p style="font-size: 11px; color: #888888; margin-top: 20px; text-align: center;">Bu e-posta BeeHive platformu iletişim formu tarafından otomatik olarak oluşturulmuştur.</p>
+        </div>
+      `;
+
+      const resendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: CONTACT_EMAIL_FROM,
+          to: [CONTACT_EMAIL_TO],
+          reply_to: newDemoRequest.email,
+          subject: `[BeeHive Demo] ${newDemoRequest.fullName} - ${newDemoRequest.organization}`,
+          html: emailHtml
+        })
+      });
+
+      if (resendRes.ok) {
+        emailDelivered = true;
+      } else {
+        const errorData = await resendRes.json();
+        console.warn('[Resend API] E-posta gönderilemedi:', errorData);
+      }
+    } catch (sendErr) {
+      console.warn('[Resend API] Gönderim hatası:', sendErr.message);
+    }
+  } else {
+    console.info('[Demo Request] RESEND_API_KEY tanımlı değil; demo talebi yerel olarak kaydedildi:', newDemoRequest.id);
+  }
+
+  res.status(201).json({
+    success: true,
+    message: 'Talebiniz alındı. BeeHive ekibi en kısa sürede dönüş yapacaktır.',
+    requestId: newDemoRequest.id,
+    emailDelivered
+  });
+});
+
+/**
  * GET /api/public/impact-summary
  * Halk paneli etki özeti metrikleri
  */
@@ -298,7 +441,7 @@ app.get('/api/public/faqs', (req, res) => {
 
 /**
  * POST /api/admin/login
- * Yönetici paneli demo girişi (Yalnızca Jüri Demo Hesabı)
+ * Yönetici paneli işletme yetkili girişi
  */
 app.post('/api/admin/login', (req, res) => {
   const { email, password } = req.body;
@@ -313,14 +456,14 @@ app.post('/api/admin/login', (req, res) => {
         role: "SYSTEM_ADMIN",
         accessLevel: "LEVEL_4_FULL_TELEMETRY"
       },
-      accountNotice: "Yalnızca Jüri Demo Hesabı",
+      accountNotice: "Yetkili Operasyon Hesabı",
       message: "Yönetici oturumu başarıyla açıldı."
     });
   }
 
   return res.status(401).json({
     success: false,
-    error: "Giriş başarısız. Lütfen demo bilgileriyle deneyiniz: admin@circularcity.demo / Demo123!"
+    error: "Giriş başarısız. Lütfen bilgilerinizi kontrol ediniz."
   });
 });
 
@@ -475,7 +618,7 @@ app.get('/api/admin/charging', requireAdminAuth, (req, res) => {
 
 /**
  * GET /api/admin/ai/recommendations
- * AI Enerji Asistanı önerileri
+ * Enerji Karar Destek Algoritması önerileri
  */
 app.get('/api/admin/ai/recommendations', requireAdminAuth, (req, res) => {
   res.json({
@@ -487,7 +630,7 @@ app.get('/api/admin/ai/recommendations', requireAdminAuth, (req, res) => {
 
 /**
  * POST /api/admin/ai/recommendations/:id/apply
- * AI önerisini uygulama (Yalnızca mock durum değişikliği)
+ * Enerji planlama önerisini uygulama (Yalnızca mock durum değişikliği)
  */
 app.post('/api/admin/ai/recommendations/:id/apply', requireAdminAuth, (req, res) => {
   const rec = aiRecommendations.find(r => r.id === req.params.id);
@@ -500,8 +643,8 @@ app.post('/api/admin/ai/recommendations/:id/apply', requireAdminAuth, (req, res)
   const logEntry = {
     id: `LOG-${Date.now().toString().slice(-4)}`,
     timestamp: new Date().toISOString(),
-    type: "AI_APPLY",
-    message: `AI Önerisi '${rec.title}' için mock optimizasyon uygulandı.`
+    type: "ALGO_APPLY",
+    message: `Enerji planlama önerisi '${rec.title}' için optimizasyon uygulandı.`
   };
   eventLogs.unshift(logEntry);
 
@@ -516,7 +659,7 @@ app.post('/api/admin/ai/recommendations/:id/apply', requireAdminAuth, (req, res)
 
 /**
  * POST /api/admin/ai/recommendations/:id/dismiss
- * AI önerisini yok sayma
+ * Enerji planlama önerisini yok sayma
  */
 app.post('/api/admin/ai/recommendations/:id/dismiss', requireAdminAuth, (req, res) => {
   const rec = aiRecommendations.find(r => r.id === req.params.id);
@@ -529,8 +672,8 @@ app.post('/api/admin/ai/recommendations/:id/dismiss', requireAdminAuth, (req, re
   const logEntry = {
     id: `LOG-${Date.now().toString().slice(-4)}`,
     timestamp: new Date().toISOString(),
-    type: "AI_DISMISS",
-    message: `AI Önerisi '${rec.title}' yok sayıldı.`
+    type: "ALGO_DISMISS",
+    message: `Enerji planlama önerisi '${rec.title}' yok sayıldı.`
   };
   eventLogs.unshift(logEntry);
 
@@ -635,10 +778,107 @@ app.patch('/api/admin/feedback/:id', requireAdminAuth, (req, res) => {
   });
 });
 
+/**
+ * GET /api/admin/reports
+ * Kapsamlı operasyon, enerji, batarya ve etki raporları verisi
+ */
+app.get('/api/admin/reports', requireAdminAuth, (req, res) => {
+  const { startDate, endDate, stationId } = req.query;
+
+  let filteredStations = stationsData;
+  if (stationId && stationId !== 'all') {
+    filteredStations = stationsData.filter(
+      s => s.stationId.toLowerCase() === stationId.toLowerCase()
+    );
+  }
+
+  // Günlük enerji serisi simülasyonu
+  const dailyEnergy = [
+    { date: "2026-10-11", solarProductionKwh: 41.2, loadConsumptionKwh: 18.4, cleanEnergyRatio: 94, gridFeedKwh: 22.8 },
+    { date: "2026-10-12", solarProductionKwh: 38.6, loadConsumptionKwh: 19.1, cleanEnergyRatio: 91, gridFeedKwh: 19.5 },
+    { date: "2026-10-13", solarProductionKwh: 44.5, loadConsumptionKwh: 17.8, cleanEnergyRatio: 96, gridFeedKwh: 26.7 },
+    { date: "2026-10-14", solarProductionKwh: 36.0, loadConsumptionKwh: 20.2, cleanEnergyRatio: 88, gridFeedKwh: 15.8 },
+    { date: "2026-10-15", solarProductionKwh: 42.8, loadConsumptionKwh: 18.0, cleanEnergyRatio: 95, gridFeedKwh: 24.8 },
+    { date: "2026-10-16", solarProductionKwh: 40.4, loadConsumptionKwh: 19.5, cleanEnergyRatio: 92, gridFeedKwh: 20.9 },
+    { date: "2026-10-17", solarProductionKwh: 43.1, loadConsumptionKwh: 18.2, cleanEnergyRatio: 95, gridFeedKwh: 24.9 },
+  ];
+
+  // Batarya sağlığı rapor verisi
+  const batteryHealth = filteredStations.map(s => ({
+    stationId: s.stationId,
+    stationName: s.name,
+    moduleId: s.adminOnly.moduleId,
+    chemistry: s.adminOnly.chemistryType,
+    soh: s.adminOnly.sohRaw,
+    soc: s.adminOnly.socRaw,
+    cycleCount: s.adminOnly.cycleCount,
+    cellDeltaMv: Math.round(
+      (Math.max(...s.adminOnly.cellTemperatures) - Math.min(...s.adminOnly.cellTemperatures)) * 25
+    ),
+    state: s.adminOnly.batteryState,
+    lastMaintenance: s.adminOnly.lastMaintenanceDate
+  }));
+
+  // Çevresel ve CO2 etki raporu
+  const impactSummary = {
+    totalSolarGeneratedKwh: dailyEnergy.reduce((acc, d) => acc + d.solarProductionKwh, 0),
+    totalLoadConsumedKwh: dailyEnergy.reduce((acc, d) => acc + d.loadConsumptionKwh, 0),
+    totalCo2AvoidedKg: Math.round(dailyEnergy.reduce((acc, d) => acc + d.solarProductionKwh, 0) * 0.48),
+    circularBatteryCount: filteredStations.length,
+    activeChargingSessions: 142
+  };
+
+  res.json({
+    success: true,
+    disclaimer: "Demo / Simülasyon – Veriler referans operasyon senaryosuna dayanır.",
+    dateRange: { startDate: startDate || "2026-10-11", endDate: endDate || "2026-10-17" },
+    dailyEnergy,
+    batteryHealth,
+    impactSummary,
+    eventLogsCount: eventLogs.length
+  });
+});
+
+/**
+ * 15 Saniyede Bir Küçük Değişken Simülasyon Telemetrisi (Demo Canlılığı)
+ * Yalnızca test ortamı dışındayken çalışır.
+ */
+if (process.env.NODE_ENV !== 'test') {
+  setInterval(() => {
+    stationsData.forEach(st => {
+      // Yalnızca aktif veya sınırlı duraklarda küçük doğal dalgalanma
+      if (st.status === 'aktif' || st.status === 'sinirli') {
+        // Güneş üretimi ±0.15 kW dalgalanma (0 ile 6.8 kW arası)
+        const pvDelta = (Math.random() * 0.3 - 0.15);
+        st.solarProductionKw = Math.max(0, Math.min(6.8, parseFloat((st.solarProductionKw + pvDelta).toFixed(2))));
+
+        // Yük tüketimi ±0.08 kW dalgalanma (0.8 ile 3.5 kW arası)
+        const loadDelta = (Math.random() * 0.16 - 0.08);
+        st.instantConsumptionKw = Math.max(0.5, Math.min(3.5, parseFloat((st.instantConsumptionKw + loadDelta).toFixed(2))));
+
+        // Batarya SOC ±0.1% dalgalanma
+        if (st.adminOnly && typeof st.adminOnly.socRaw === 'number') {
+          const socDelta = (Math.random() * 0.2 - 0.1);
+          st.adminOnly.socRaw = Math.max(15, Math.min(99.9, parseFloat((st.adminOnly.socRaw + socDelta).toFixed(1))));
+        }
+
+        // Hücre sıcaklıkları ±0.1°C dalgalanma
+        if (st.adminOnly && Array.isArray(st.adminOnly.cellTemperatures)) {
+          st.adminOnly.cellTemperatures = st.adminOnly.cellTemperatures.map(t =>
+            parseFloat((t + (Math.random() * 0.1 - 0.05)).toFixed(1))
+          );
+        }
+
+        st.lastUpdated = new Date().toISOString();
+      }
+    });
+  }, 15000);
+}
+
 export default app;
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
-    console.log(`[CircularCity Energy API] Sunucu ${PORT} portunda çalışıyor.`);
+    console.log(`[BeeHive API] Sunucu ${PORT} portunda çalışıyor.`);
   });
 }

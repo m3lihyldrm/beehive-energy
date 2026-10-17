@@ -132,4 +132,6 @@ export interface FilterState {
   onlyActive: boolean;
   showNearestOnly: boolean;
   searchQuery: string;
+  ledLighting?: boolean;
+  screenDisplay?: boolean;
 }

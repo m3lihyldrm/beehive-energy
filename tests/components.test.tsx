@@ -9,7 +9,7 @@ import { StationDrawer } from '../src/components/StationDrawer';
 import { fallbackStations } from '../src/services/mockData';
 import { FilterState } from '../src/types';
 
-describe('CircularCity Energy Frontend Bileşen ve Arayüz Testleri', () => {
+describe('BeeHive Frontend Bileşen ve Arayüz Testleri', () => {
   // 9. React uygulaması build kontrolü
   describe('9. React Uygulaması Build Kontrolü', () => {
     it('Vite build çıktısı (dist/index.html ve varlıklar) başarıyla oluşturulmuştur', () => {
@@ -22,7 +22,7 @@ describe('CircularCity Energy Frontend Bileşen ve Arayüz Testleri', () => {
       expect(fs.existsSync(assetsPath)).toBe(true);
 
       const htmlContent = fs.readFileSync(indexPath, 'utf-8');
-      expect(htmlContent).toContain('CircularCity Energy');
+      expect(htmlContent).toContain('BeeHive');
       expect(htmlContent).toContain('<div id="root">');
     });
   });
@@ -185,87 +185,180 @@ describe('CircularCity Energy Frontend Bileşen ve Arayüz Testleri', () => {
     });
   });
 
-  // 13. Jüri Sunumu (Guided Tour) Kontrolü
-  describe('13. Jüri Sunumu (Guided Tour) Kontrolü', () => {
-    it('JuryTourGuide 1. adımda problem tanımını doğru başlık ve metinle görüntüler', async () => {
-      const { JuryTourGuide } = await import('../src/components/JuryTourGuide');
-      const handleNext = vi.fn();
-      const handlePrev = vi.fn();
-      const handleClose = vi.fn();
-      const handleRestart = vi.fn();
-      const handleExplore = vi.fn();
-
-      render(
-        <JuryTourGuide
-          step={1}
-          onNext={handleNext}
-          onPrev={handlePrev}
-          onClose={handleClose}
-          onRestart={handleRestart}
-          onExploreMap={handleExplore}
-        />
-      );
-
-      expect(screen.getByText('1/7 · Problem Tanımı')).toBeInTheDocument();
-      expect(
-        screen.getByText('Kent mobilyaları enerji tüketir; bataryalar ise ikinci yaşam potansiyeli taşır.')
-      ).toBeInTheDocument();
-      expect(screen.getByText('Sonraki')).toBeInTheDocument();
-      expect(screen.getByText('Sunumu Kapat')).toBeInTheDocument();
-
-      // Sonraki butonuna tıklandığında handleNext çağrılır
-      fireEvent.click(screen.getByText('Sonraki'));
-      expect(handleNext).toHaveBeenCalledTimes(1);
-    });
-
-    it('JuryTourGuide tamamlandığında (Adım 8) başarı ekranını ve bitiş butonlarını sunar', async () => {
-      const { JuryTourGuide } = await import('../src/components/JuryTourGuide');
-      const handleNext = vi.fn();
-      const handlePrev = vi.fn();
-      const handleClose = vi.fn();
-      const handleRestart = vi.fn();
-      const handleExplore = vi.fn();
-
-      render(
-        <JuryTourGuide
-          step={8}
-          onNext={handleNext}
-          onPrev={handlePrev}
-          onClose={handleClose}
-          onRestart={handleRestart}
-          onExploreMap={handleExplore}
-        />
-      );
-
-      expect(screen.getByText('Döngüsel enerji, erişilebilir kamusal hizmet.')).toBeInTheDocument();
-      expect(screen.getByText('Haritayı İncele')).toBeInTheDocument();
-      expect(screen.getByText('Sunumu Baştan Başlat')).toBeInTheDocument();
-
-      fireEvent.click(screen.getByText('Haritayı İncele'));
-      expect(handleExplore).toHaveBeenCalledTimes(1);
-
-      fireEvent.click(screen.getByText('Sunumu Baştan Başlat'));
-      expect(handleRestart).toHaveBeenCalledTimes(1);
-    });
-
-    it('Navbar üzerinde "Jüri Sunumu" butonu yer alır ve tıklandığında onStartJuryTour tetiklenir', async () => {
+  // 13. Kurumsal Startup Navigasyon ve Güvenli Yönetim Girişi Kontrolü
+  describe('13. Kurumsal Startup Navigasyon ve Güvenli Yönetim Girişi Kontrolü', () => {
+    it('Navbar kurumsal sayfaları (Çözüm, Teknoloji, İş Modeli) ve Demo Talebi butonunu eksiksiz görüntüler', async () => {
       const { Navbar } = await import('../src/components/Navbar');
       const handleNavigate = vi.fn();
-      const handleStartTour = vi.fn();
 
       render(
         <Navbar
           currentTab="home"
           onNavigate={handleNavigate}
-          onStartJuryTour={handleStartTour}
         />
       );
 
-      const juryButtons = screen.getAllByText('Jüri Sunumu');
-      expect(juryButtons.length).toBeGreaterThan(0);
+      // Startup menü elemanlarını doğrula
+      expect(screen.getByText('Çözüm')).toBeInTheDocument();
+      expect(screen.getByText('Teknoloji')).toBeInTheDocument();
+      expect(screen.getByText('İş Modeli')).toBeInTheDocument();
+      expect(screen.getByText('Şehir Haritası')).toBeInTheDocument();
+      expect(screen.getByText('Etki')).toBeInTheDocument();
+      expect(screen.getByText('SSS')).toBeInTheDocument();
+      expect(screen.getByText('İletişim')).toBeInTheDocument();
 
-      fireEvent.click(juryButtons[0]);
-      expect(handleStartTour).toHaveBeenCalledTimes(1);
+      const demoCtaButtons = screen.getAllByText('Demo Talebi');
+      expect(demoCtaButtons.length).toBeGreaterThan(0);
+
+      // Hiçbir jüri butonu veya metni bulunmamalı
+      expect(screen.queryByText(/Jüri/i)).toBeNull();
+    });
+
+    it('AdminLogin kurumsal "Yetkili Operasyon Erişimi" başlığı taşır ve demo şifre doldurma butonu içermez', async () => {
+      const { AdminLogin } = await import('../src/components/admin/AdminLogin');
+      const handleLoginSuccess = vi.fn();
+
+      render(
+        <AdminLogin
+          loginEmail=""
+          setLoginEmail={vi.fn()}
+          loginPassword=""
+          setLoginPassword={vi.fn()}
+          loginError=""
+          isLoggingIn={false}
+          onSubmit={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText('Yetkili Operasyon Erişimi')).toBeInTheDocument();
+      expect(
+        screen.getByText(/Bu panel yalnızca yetkili BeeHive işletme kullanıcıları içindir/i)
+      ).toBeInTheDocument();
+
+      // Demo doldur butonu olmamalı
+      expect(screen.queryByText(/Demo Bilgilerini Doldur/i)).toBeNull();
+      // Arayüzde açık demo şifre bulunmamalı
+      expect(screen.queryByText('Demo123!')).toBeNull();
+      expect(screen.queryByText(/Jüri/i)).toBeNull();
+    });
+
+    it('TAB_ROUTES ve PATH_TO_TAB tüm startup kurumsal rotalarını (/cozum, /teknoloji, /is-modeli) içerir', async () => {
+      const { TAB_ROUTES, PATH_TO_TAB } = await import('../src/components/Navbar');
+
+      expect(TAB_ROUTES.solution).toBe('/cozum');
+      expect(TAB_ROUTES.technology).toBe('/teknoloji');
+      expect(TAB_ROUTES['business-model']).toBe('/is-modeli');
+      expect(PATH_TO_TAB['/cozum']).toBe('solution');
+      expect(PATH_TO_TAB['/teknoloji']).toBe('technology');
+      expect(PATH_TO_TAB['/is-modeli']).toBe('business-model');
+    });
+  });
+
+  // 14. Yasal ve KVKK Sayfaları Kontrolü
+  describe('14. Yasal ve KVKK Sayfaları Kontrolü', () => {
+    it('Gizlilik Politikası sayfasında konum verisi açıklaması ve KVKK maddeleri yer alır', async () => {
+      const { MemoryRouter } = await import('react-router-dom');
+      const { PrivacyPolicyView } = await import('../src/components/PrivacyPolicyView');
+      const { unmount } = render(
+        <MemoryRouter>
+          <PrivacyPolicyView />
+        </MemoryRouter>
+      );
+      expect(screen.getByText('Gizlilik Politikası')).toBeInTheDocument();
+      expect(
+        screen.getByText(/Konum izni yalnızca en yakın durak hesaplaması için kullanılır/i)
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Konum verisi kalıcı olarak saklanmaz/i)).toBeInTheDocument();
+      unmount();
+    });
+
+    it('Kullanım Koşulları ve Çerez Politikası sayfaları başarıyla render edilir', async () => {
+      const { MemoryRouter } = await import('react-router-dom');
+      const { TermsOfUseView } = await import('../src/components/TermsOfUseView');
+      const { CookiePolicyView } = await import('../src/components/CookiePolicyView');
+
+      const { unmount: unmountTerms } = render(
+        <MemoryRouter>
+          <TermsOfUseView />
+        </MemoryRouter>
+      );
+      expect(screen.getByText('Kullanım Koşulları')).toBeInTheDocument();
+      unmountTerms();
+
+      const { unmount: unmountCookies } = render(
+        <MemoryRouter>
+          <CookiePolicyView />
+        </MemoryRouter>
+      );
+      expect(screen.getByText('Çerez Politikası')).toBeInTheDocument();
+      unmountCookies();
+    });
+  });
+
+  // 15. BeeHive İşletme Yönetim Paneli Modülleri Kontrolü
+  describe('15. BeeHive İşletme Yönetim Paneli Modülleri Kontrolü', () => {
+    it('AdminReports rapor türlerini ve dışa aktarma arayüzünü eksiksiz sunar', async () => {
+      const { AdminReports } = await import('../src/components/admin/AdminReports');
+      const { unmount } = render(<AdminReports stations={fallbackStations as any} feedbacks={[]} />);
+
+      expect(screen.getByText('İşletme Raporlama & Veri Dışa Aktarma Merkezi')).toBeInTheDocument();
+      expect(screen.getByText('Günlük Enerji Raporu')).toBeInTheDocument();
+      expect(screen.getByText('Haftalık Performans')).toBeInTheDocument();
+      expect(screen.getByText('Batarya Sağlığı (SOH/SOC)')).toBeInTheDocument();
+      expect(screen.getByText('Bakım & Servis Kayıtları')).toBeInTheDocument();
+      expect(screen.getByText('CO2 & Çevresel Etki')).toBeInTheDocument();
+      expect(screen.getByText('Raporu Dışa Aktar')).toBeInTheDocument();
+      unmount();
+    });
+
+    it('AdminSettings 5 kurumsal rol tanımını ve eşik değerlerini görüntüler', async () => {
+      const { AdminSettings } = await import('../src/components/admin/AdminSettings');
+      const { unmount } = render(<AdminSettings />);
+
+      expect(screen.getByText('İşletme Ayarları')).toBeInTheDocument();
+      expect(screen.getByText('Kullanıcı Rolleri')).toBeInTheDocument();
+
+      // Rol sekmesine tıkla
+      fireEvent.click(screen.getByText('Kullanıcı Rolleri'));
+      expect(screen.getByText('Süper Yönetici')).toBeInTheDocument();
+      expect(screen.getByText('Operasyon Yöneticisi')).toBeInTheDocument();
+      expect(screen.getByText('Saha Bakım Ekibi')).toBeInTheDocument();
+      expect(screen.getByText('Enerji Analisti')).toBeInTheDocument();
+      expect(screen.getByText('Salt Okunur Kullanıcı')).toBeInTheDocument();
+      unmount();
+    });
+
+    it('AdminLayout zorunlu simülasyon bandını ve 11 işletme sekmesini görüntüler', async () => {
+      const { AdminLayout } = await import('../src/components/admin/AdminLayout');
+      const { unmount } = render(
+        <AdminLayout
+          activeTab="overview"
+          setActiveTab={vi.fn()}
+          onLogout={vi.fn()}
+          onRefresh={vi.fn()}
+          isLoading={false}
+          lastUpdatedTime="16:45"
+          actionSuccessMessage={null}
+          onClearActionSuccess={vi.fn()}
+        >
+          <div>Panel İçeriği</div>
+        </AdminLayout>
+      );
+
+      expect(
+        screen.getByText('Simülasyon modu aktif. Bu panel fiziksel cihazlara komut göndermez.')
+      ).toBeInTheDocument();
+      expect(screen.getByText('Genel Bakış')).toBeInTheDocument();
+      expect(screen.getByText('Durak Yönetimi')).toBeInTheDocument();
+      expect(screen.getByText('Batarya Yönetimi')).toBeInTheDocument();
+      expect(screen.getByText('Enerji')).toBeInTheDocument();
+      expect(screen.getByText('İklimlendirme')).toBeInTheDocument();
+      expect(screen.getByText('Şarj')).toBeInTheDocument();
+      expect(screen.getByText('Enerji Planlama Önerileri')).toBeInTheDocument();
+      expect(screen.getByText('Uyarılar')).toBeInTheDocument();
+      expect(screen.getByText('Raporlar')).toBeInTheDocument();
+      expect(screen.getByText('Ayarlar')).toBeInTheDocument();
+      unmount();
     });
   });
 });

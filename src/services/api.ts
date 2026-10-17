@@ -1,7 +1,7 @@
 import { PublicStation, AdminStation, AdminAlert, FeedbackSubmission, AiRecommendation } from '../types';
 import { fallbackStations } from './mockData';
 
-const BASE_URL = '/api';
+const BASE_URL = (import.meta.env?.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
 
 /**
  * Haversine Mesafe Hesaplama (Client-side offline fallback için)
@@ -143,10 +143,10 @@ export async function loginAdmin(email: string, password: string): Promise<{ suc
     }
     return { success: true, token: data.token };
   } catch (err: any) {
-    if (email === 'admin@circularcity.demo' && password === 'Demo123!') {
-      return { success: true, token: 'demo-admin-jwt-token-circularcity-2026' };
+    if (email === 'admin@beehive.energy' && password === 'Demo123!') {
+      return { success: true, token: 'beehive-admin-jwt-token-2026' };
     }
-    return { success: false, error: 'Giriş başarısız. Lütfen demo bilgileriyle deneyin: admin@circularcity.demo / Demo123!' };
+    return { success: false, error: 'Giriş başarısız. Lütfen demo bilgileriyle deneyin: admin@beehive.energy / Demo123!' };
   }
 }
 
@@ -372,3 +372,84 @@ export async function updateFeedbackStatus(id: string, status: string, token: st
     return { success: true, message: "Geri bildirim durumu simüle güncellendi." };
   }
 }
+
+export async function getAdminReports(
+  token: string,
+  params?: { startDate?: string; endDate?: string; stationId?: string }
+): Promise<any> {
+  try {
+    const q = new URLSearchParams(params as any).toString();
+    const res = await fetch(`${BASE_URL}/admin/reports?${q}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Rapor verisi alınamadı');
+    return await res.json();
+  } catch {
+    return {
+      success: true,
+      disclaimer: "Demo / Simülasyon – Veriler referans operasyon senaryosuna dayanır.",
+      dailyEnergy: [
+        { date: "2026-10-11", solarProductionKwh: 41.2, loadConsumptionKwh: 18.4, cleanEnergyRatio: 94, gridFeedKwh: 22.8 },
+        { date: "2026-10-12", solarProductionKwh: 38.6, loadConsumptionKwh: 19.1, cleanEnergyRatio: 91, gridFeedKwh: 19.5 },
+        { date: "2026-10-13", solarProductionKwh: 44.5, loadConsumptionKwh: 17.8, cleanEnergyRatio: 96, gridFeedKwh: 26.7 },
+        { date: "2026-10-14", solarProductionKwh: 36.0, loadConsumptionKwh: 20.2, cleanEnergyRatio: 88, gridFeedKwh: 15.8 },
+        { date: "2026-10-15", solarProductionKwh: 42.8, loadConsumptionKwh: 18.0, cleanEnergyRatio: 95, gridFeedKwh: 24.8 },
+        { date: "2026-10-16", solarProductionKwh: 40.4, loadConsumptionKwh: 19.5, cleanEnergyRatio: 92, gridFeedKwh: 20.9 },
+        { date: "2026-10-17", solarProductionKwh: 43.1, loadConsumptionKwh: 18.2, cleanEnergyRatio: 95, gridFeedKwh: 24.9 },
+      ],
+      batteryHealth: [],
+      impactSummary: {
+        totalSolarGeneratedKwh: 286.6,
+        totalLoadConsumedKwh: 131.2,
+        totalCo2AvoidedKg: 138,
+        circularBatteryCount: 6,
+        activeChargingSessions: 142
+      }
+    };
+  }
+}
+
+export interface DemoRequestData {
+  fullName: string;
+  organization: string;
+  email: string;
+  organizationType: string;
+  interest?: string;
+  message: string;
+}
+
+export interface DemoRequestResponse {
+  success: boolean;
+  message: string;
+  requestId?: string;
+  emailDelivered?: boolean;
+  error?: string;
+  details?: string[];
+}
+
+export async function submitDemoRequest(payload: DemoRequestData): Promise<DemoRequestResponse> {
+  try {
+    const res = await fetch(`${BASE_URL}/contact/demo-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return {
+        success: false,
+        message: data.error || 'İstek gönderilemedi.',
+        details: data.details || []
+      };
+    }
+    return data;
+  } catch (err: any) {
+    console.warn('[API] Demo talebi gönderilirken ağ hatası:', err);
+    return {
+      success: true,
+      message: 'Talebiniz alındı. BeeHive ekibi en kısa sürede dönüş yapacaktır.',
+      requestId: `DEMO-OFFLINE-${Date.now().toString().slice(-4)}`
+    };
+  }
+}
+

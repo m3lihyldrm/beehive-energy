@@ -33,6 +33,14 @@ export default {
         info: {
           DEFAULT: 'var(--info)',
           soft: 'var(--info-soft)',
+        },
+        honey: {
+          DEFAULT: 'var(--honey)',
+          soft: 'var(--honey-soft)',
+        },
+        hive: {
+          dark: 'var(--hive-dark)',
+          border: 'var(--hive-border)',
         }
       },
       borderRadius: {

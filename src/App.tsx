@@ -1,250 +1,195 @@
-import React, { useState, useEffect } from 'react';
-import { Navbar, NavTab } from './components/Navbar';
-import { HomeView } from './components/HomeView';
-import { CityMapView } from './components/CityMapView';
-import { HowItWorksView } from './components/HowItWorksView';
-import { ImpactView } from './components/ImpactView';
-import { FaqView } from './components/FaqView';
-import { AdminPortal } from './components/AdminPortal';
-import { JuryTourGuide } from './components/JuryTourGuide';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
+import { Navbar, NavTab, TAB_ROUTES, PATH_TO_TAB } from './components/Navbar';
+import { BeeHiveLogo } from './components/BeeHiveLogo';
 import { PublicStation } from './types';
 import { getPublicStations } from './services/api';
 import { fallbackStations } from './services/mockData';
-import { ShieldCheck, Lock } from 'lucide-react';
+import { ShieldCheck, Lock, Sparkles, Loader2 } from 'lucide-react';
 
-export const App: React.FC = () => {
-  // Sync tab with pathname or hash
-  const getInitialTab = (): NavTab => {
-    const path = window.location.pathname.toLowerCase();
-    const hash = window.location.hash.toLowerCase();
+// Code-splitting with React.lazy
+const HomeView = lazy(() => import('./components/HomeView').then((m) => ({ default: m.HomeView })));
+const SolutionView = lazy(() => import('./components/SolutionView').then((m) => ({ default: m.SolutionView })));
+const TechnologyView = lazy(() => import('./components/TechnologyView').then((m) => ({ default: m.TechnologyView })));
+const CityMapView = lazy(() => import('./components/CityMapView').then((m) => ({ default: m.CityMapView })));
+const HowItWorksView = lazy(() => import('./components/HowItWorksView').then((m) => ({ default: m.HowItWorksView })));
+const ImpactView = lazy(() => import('./components/ImpactView').then((m) => ({ default: m.ImpactView })));
+const BusinessModelView = lazy(() => import('./components/BusinessModelView').then((m) => ({ default: m.BusinessModelView })));
+const FaqView = lazy(() => import('./components/FaqView').then((m) => ({ default: m.FaqView })));
+const ContactView = lazy(() => import('./components/ContactView').then((m) => ({ default: m.ContactView })));
+const AdminPortal = lazy(() => import('./components/AdminPortal').then((m) => ({ default: m.AdminPortal })));
+const PrivacyPolicyView = lazy(() => import('./components/PrivacyPolicyView').then((m) => ({ default: m.PrivacyPolicyView })));
+const TermsOfUseView = lazy(() => import('./components/TermsOfUseView').then((m) => ({ default: m.TermsOfUseView })));
+const CookiePolicyView = lazy(() => import('./components/CookiePolicyView').then((m) => ({ default: m.CookiePolicyView })));
 
-    if (path.includes('admin') || hash.includes('admin')) return 'admin';
-    if (path.includes('harita') || hash.includes('harita') || path.includes('map') || hash.includes('map')) return 'map';
-    if (path.includes('nasil') || hash.includes('nasil') || path.includes('works')) return 'how-it-works';
-    if (path.includes('etki') || hash.includes('etki') || path.includes('impact')) return 'impact';
-    if (path.includes('sss') || hash.includes('sss') || path.includes('faq')) return 'faq';
-    return 'home';
-  };
+import { SEOHead } from './components/common/SEOHead';
 
-  const [currentTab, setCurrentTab] = useState<NavTab>(getInitialTab);
+const PageLoader: React.FC = () => (
+  <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 text-[#5D665E]">
+    <Loader2 className="w-8 h-8 text-[#1F5A43] animate-spin" />
+    <span className="text-xs font-medium">Yükleniyor...</span>
+  </div>
+);
+
+const AppContent: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [stations, setStations] = useState<PublicStation[]>(fallbackStations);
 
-  // Jüri Sunumu (Guided Tour) State
-  const [isTourActive, setIsTourActive] = useState(false);
-  const [tourStep, setTourStep] = useState(1);
+  // Aktif sekme hesaplama
+  const currentTab: NavTab = PATH_TO_TAB[location.pathname.toLowerCase()] || 'home';
 
   useEffect(() => {
-    getPublicStations()
-      .then(data => {
-        if (data && data.length > 0) {
-          setStations(data);
-        }
-      });
+    getPublicStations().then((data) => {
+      if (data && data.length > 0) {
+        setStations(data);
+      }
+    });
   }, []);
 
   const handleNavigate = (tab: NavTab) => {
-    setCurrentTab(tab);
-    const tabUrls: Record<NavTab, string> = {
-      home: '/',
-      map: '/harita',
-      'how-it-works': '/nasil-calisir',
-      impact: '/etki',
-      faq: '/sss',
-      admin: '/admin'
-    };
-    window.history.pushState(null, '', tabUrls[tab]);
+    navigate(TAB_ROUTES[tab]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Jüri Sunumu Navigasyonu
-  const goToTourStep = (stepNumber: number) => {
-    setTourStep(stepNumber);
-    if (stepNumber === 1) {
-      handleNavigate('home');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (stepNumber === 2) {
-      handleNavigate('home');
-      setTimeout(() => {
-        const el = document.getElementById('tour-step-2-diagram');
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 120);
-    } else if (stepNumber === 3) {
-      handleNavigate('map');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (stepNumber === 4) {
-      handleNavigate('map');
-    } else if (stepNumber === 5) {
-      handleNavigate('map');
-    } else if (stepNumber === 6) {
-      handleNavigate('admin');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (stepNumber === 7) {
-      handleNavigate('impact');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const handleStartTour = () => {
-    setIsTourActive(true);
-    goToTourStep(1);
-  };
-
-  const handleNextStep = () => {
-    if (tourStep <= 7) {
-      goToTourStep(tourStep + 1);
-    }
-  };
-
-  const handlePrevStep = () => {
-    if (tourStep > 1) {
-      goToTourStep(tourStep - 1);
-    }
-  };
-
-  const handleCloseTour = () => {
-    setIsTourActive(false);
-  };
-
-  const handleRestartTour = () => {
-    goToTourStep(1);
-  };
-
-  const handleExploreMap = () => {
-    setIsTourActive(false);
-    handleNavigate('map');
-  };
-
-  // If on admin view without active tour, render standalone AdminPortal
-  if (currentTab === 'admin' && !isTourActive) {
-    return <AdminPortal onBackToPublic={() => handleNavigate('home')} />;
+  // Eğer /admin yolundaysak, bağımsız İşletme Yönetim Paneli göster
+  const isAdminPath = location.pathname.toLowerCase().startsWith('/admin');
+  if (isAdminPath) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <SEOHead />
+        <AdminPortal onBackToPublic={() => navigate('/')} />
+      </Suspense>
+    );
   }
 
   return (
     <div className="min-h-screen bg-[#F6F6F2] text-[#182019] flex flex-col font-sans selection:bg-[#1F5A43] selection:text-white">
-      {/* Global Navbar */}
-      <Navbar
-        currentTab={currentTab}
-        onNavigate={handleNavigate}
-        onStartJuryTour={handleStartTour}
-      />
+      {/* Dynamic SEO Meta Tags */}
+      <SEOHead />
 
-      {/* Main View Area */}
+      {/* Global Navbar */}
+      <Navbar currentTab={currentTab} onNavigate={handleNavigate} />
+
+      {/* Main View Area with Routes & Suspense */}
       <main className="flex-1 w-full">
-        {currentTab === 'home' && (
-          <HomeView
-            onNavigate={handleNavigate}
-            tourStep={isTourActive ? tourStep : undefined}
-          />
-        )}
-        {currentTab === 'map' && (
-          <CityMapView
-            stations={stations}
-            tourStep={isTourActive ? tourStep : undefined}
-          />
-        )}
-        {currentTab === 'how-it-works' && <HowItWorksView />}
-        {currentTab === 'impact' && (
-          <ImpactView tourStep={isTourActive ? tourStep : undefined} />
-        )}
-        {currentTab === 'faq' && <FaqView />}
-        {currentTab === 'admin' && (
-          <AdminPortal
-            onBackToPublic={() => handleNavigate('home')}
-            tourStep={isTourActive ? tourStep : undefined}
-          />
-        )}
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<HomeView onNavigate={handleNavigate} />} />
+            <Route path="/cozum" element={<SolutionView />} />
+            <Route path="/solution" element={<Navigate to="/cozum" replace />} />
+            <Route path="/teknoloji" element={<TechnologyView />} />
+            <Route path="/technology" element={<Navigate to="/teknoloji" replace />} />
+            <Route path="/harita" element={<CityMapView stations={stations} />} />
+            <Route path="/map" element={<Navigate to="/harita" replace />} />
+            <Route path="/nasil-calisir" element={<HowItWorksView />} />
+            <Route path="/nasil" element={<Navigate to="/nasil-calisir" replace />} />
+            <Route path="/etki" element={<ImpactView />} />
+            <Route path="/impact" element={<Navigate to="/etki" replace />} />
+            <Route path="/is-modeli" element={<BusinessModelView />} />
+            <Route path="/business-model" element={<Navigate to="/is-modeli" replace />} />
+            <Route path="/sss" element={<FaqView />} />
+            <Route path="/faq" element={<Navigate to="/sss" replace />} />
+            <Route path="/iletisim" element={<ContactView />} />
+            <Route path="/contact" element={<Navigate to="/iletisim" replace />} />
+            <Route path="/gizlilik-politikasi" element={<PrivacyPolicyView />} />
+            <Route path="/kullanim-kosullari" element={<TermsOfUseView />} />
+            <Route path="/cerez-politikasi" element={<CookiePolicyView />} />
+            <Route path="/admin" element={<AdminPortal onBackToPublic={() => navigate('/')} />} />
+            <Route path="/admin/*" element={<AdminPortal onBackToPublic={() => navigate('/')} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </main>
 
       {/* SAKİN KURUMSAL FOOTER */}
-      <footer className="bg-white border-t border-[#DDE1DA] text-[#5D665E] py-10 px-4 sm:px-6 lg:px-8 mt-16">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#E5F0EA] border border-[#1F5A43]/20 flex items-center justify-center text-[#1F5A43]">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12" />
-                    <path d="M12 6v6l4 2" />
-                    <path d="M16 2v4h4" />
-                  </svg>
-                </div>
-                <div className="flex items-baseline">
-                  <span className="text-base font-bold text-[#182019]">BeeHive</span>
-                  <span className="text-xs font-semibold text-[#1F5A43] ml-1">Energy</span>
-                </div>
-              </div>
+      <footer className="bg-white border-t border-[#DDE1DA] text-[#5D665E] py-12 px-4 sm:px-6 lg:px-8 mt-16">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Marka & Tanım */}
+            <div className="space-y-4">
+              <Link to="/" className="inline-block focus:outline-none">
+                <BeeHiveLogo size="md" subtext="İkinci Yaşam Enerjiden Akıllı Şehirlere" />
+              </Link>
               <p className="text-xs text-[#5D665E] leading-relaxed">
-                Konya Akıllı Şehir Ekosistemi için güneş enerjisi ve ikinci yaşam elektrikli araç bataryalarını birleştiren döngüsel enerji ağı platformu.
+                BeeHive, ikinci yaşam elektrikli araç bataryalarını güneş enerjisiyle birleştirerek akıllı duraklarda güvenli, izlenebilir ve erişilebilir kamusal enerji hizmetleri sunan modüler kent altyapısıdır.
               </p>
-              <div className="flex items-center gap-2 text-xs text-[#1F5A43] font-medium">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Batarya oturma alanında değil; ayrı güvenli enerji kabininde korunur.</span>
+              <div className="flex items-center gap-2 text-xs text-[#1F5A43] font-medium bg-[#E5F0EA]/60 border border-[#1F5A43]/20 px-3 py-2 rounded-xl">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-[#1F5A43]" />
+                <span>Batarya ayrı güvenli enerji kabininde korunur.</span>
               </div>
             </div>
 
+            {/* Hızlı Menü */}
             <div className="space-y-2 text-xs">
-              <div className="font-semibold text-[#182019] uppercase tracking-wider mb-2">Hızlı Menü</div>
-              <div>
-                <button onClick={() => handleNavigate('home')} className="hover:text-[#182019] transition">Ana Sayfa</button>
-              </div>
-              <div>
-                <button onClick={() => handleNavigate('map')} className="hover:text-[#182019] transition">Konya Şehir Haritası</button>
-              </div>
-              <div>
-                <button onClick={() => handleNavigate('how-it-works')} className="hover:text-[#182019] transition">Nasıl Çalışır?</button>
-              </div>
-              <div>
-                <button onClick={() => handleNavigate('impact')} className="hover:text-[#182019] transition">Sürdürülebilirlik & Etki</button>
-              </div>
-              <div>
-                <button onClick={() => handleNavigate('faq')} className="hover:text-[#182019] transition">Sıkça Sorulan Sorular</button>
-              </div>
-              <div>
-                <button onClick={() => handleNavigate('admin')} className="text-[#1F5A43] hover:text-[#174634] transition font-medium flex items-center gap-1">
-                  <Lock className="w-3 h-3" />
-                  <span>Yönetici Portalı Girişi →</span>
-                </button>
-              </div>
+              <div className="font-bold text-[#182019] uppercase tracking-wider mb-2">Kurumsal & Ürün</div>
+              <div><Link to="/" className="hover:text-[#182019] transition">Ana Sayfa</Link></div>
+              <div><Link to="/cozum" className="hover:text-[#182019] transition">Çözüm & Yaklaşım</Link></div>
+              <div><Link to="/teknoloji" className="hover:text-[#182019] transition">Teknoloji & Donanım</Link></div>
+              <div><Link to="/harita" className="hover:text-[#182019] transition">Konya Pilot Haritası</Link></div>
+              <div><Link to="/etki" className="hover:text-[#182019] transition">Sürdürülebilirlik & Etki</Link></div>
+              <div><Link to="/is-modeli" className="hover:text-[#182019] transition">İş Modeli & Paketler</Link></div>
+              <div><Link to="/sss" className="hover:text-[#182019] transition">Sıkça Sorulan Sorular</Link></div>
+              <div><Link to="/iletisim" className="hover:text-[#182019] transition">Demo Talebi & İletişim</Link></div>
             </div>
 
+            {/* Yasal & KVKK */}
+            <div className="space-y-2 text-xs">
+              <div className="font-bold text-[#182019] uppercase tracking-wider mb-2">Yasal & KVKK</div>
+              <div><Link to="/gizlilik-politikasi" className="hover:text-[#182019] transition">Gizlilik ve KVKK Politikası</Link></div>
+              <div><Link to="/kullanim-kosullari" className="hover:text-[#182019] transition">Kullanım Koşulları</Link></div>
+              <div><Link to="/cerez-politikasi" className="hover:text-[#182019] transition">Çerez Politikası</Link></div>
+              <p className="text-[11px] text-[#7A837B] pt-2 leading-relaxed">
+                Konum izni yalnızca en yakın durak hesaplaması için kullanılır. Konum verisi sunucularda kalıcı olarak saklanmaz.
+              </p>
+            </div>
+
+            {/* Şeffaflık & Operasyon */}
             <div className="space-y-2 text-xs text-[#5D665E]">
-              <div className="font-semibold text-[#182019] uppercase tracking-wider mb-2">Yasal & Şeffaflık Notları</div>
+              <div className="font-bold text-[#182019] uppercase tracking-wider mb-2">Şeffaflık & Mevzuat</div>
               <p>
-                <strong>Pilot Demo:</strong> Haritada ve panellerde gösterilen tüm veriler simülasyon amaçlıdır. Gerçek donanım bağlantısı sonraki aşamada planlanmaktadır.
+                <strong>Pilot Demo:</strong> Harita ve telemetri ekranlarında sunulan veriler simülasyon amaçlıdır; fiziksel donanım testleri bağımsız kabinlerde yürütülmektedir.
               </p>
               <p>
-                <strong>Şebeke Aktarımı:</strong> Şebeke aktarımı; ilgili mevzuat, dağıtım şirketi bağlantısı ve teknik uygunluğa bağlı planlanan özelliktir.
+                <strong>Şebeke Entegrasyonu:</strong> Şebeke aktarımı; ilgili EPDK mevzuatı, yerel dağıtım şirketi (EDAŞ) onayı ve teknik uygunluğa bağlı planlanan bir opsiyondur.
               </p>
-              <p>
-                <strong>İkinci Yaşam:</strong> İkinci yaşam bataryalar, teknik test ve güvenlik değerlendirmesi sonrasında sabit depolama için aday olabilir.
-              </p>
+              <div className="pt-2">
+                <Link
+                  to="/admin"
+                  className="text-xs text-[#5D665E] hover:text-[#182019] transition flex items-center gap-1.5 py-1 px-2 rounded border border-[#DDE1DA] bg-[#F6F6F2] inline-flex"
+                >
+                  <Lock className="w-3 h-3 text-[#5D665E]" />
+                  <span>Yetkili Operasyon Erişimi</span>
+                </Link>
+              </div>
             </div>
           </div>
 
           <div className="pt-6 border-t border-[#DDE1DA] flex flex-wrap items-center justify-between gap-4 text-xs text-[#5D665E]">
-            <div>
-              © 2026 BeeHive · Konya Pilot Konsepti.
+            <div className="flex items-center gap-3 flex-wrap">
+              <span>© 2026 BeeHive Energy. Tüm hakları saklıdır.</span>
+              <span>·</span>
+              <Link to="/gizlilik-politikasi" className="hover:text-[#182019] transition">Gizlilik</Link>
+              <span>·</span>
+              <Link to="/kullanim-kosullari" className="hover:text-[#182019] transition">Kullanım Koşulları</Link>
+              <span>·</span>
+              <Link to="/cerez-politikasi" className="hover:text-[#182019] transition">Çerezler</Link>
             </div>
             <div className="text-[11px] max-w-xl text-right">
-              Halk API’sinde teknik telemetri paylaşımı tasarım gereği engellenmiştir; bu ayrım otomatik testlerle doğrulanmıştır.
+              Halk API’sinde teknik telemetri paylaşımı tasarım gereği engellenmiştir; bu ayrım otomatik testlerle doğrulanmaktadır.
             </div>
           </div>
         </div>
       </footer>
-
-      {/* Jüri Sunumu İnteraktif Rehber Modu */}
-      {isTourActive && (
-        <JuryTourGuide
-          step={tourStep}
-          onNext={handleNextStep}
-          onPrev={handlePrevStep}
-          onClose={handleCloseTour}
-          onRestart={handleRestartTour}
-          onExploreMap={handleExploreMap}
-        />
-      )}
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 };
 

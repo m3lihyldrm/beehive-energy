@@ -1,7 +1,7 @@
 {
-  "name": "circularcity-energy",
+  "name": "beehive-energy",
   "version": "1.0.0",
-  "description": "BeeHive - Enerjiyi Paylaşan Şehir Altyapısı",
+  "description": "BeeHive - İkinci Yaşam Enerjiden Akıllı Şehirlere",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",

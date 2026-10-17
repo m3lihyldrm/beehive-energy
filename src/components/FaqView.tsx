@@ -27,7 +27,7 @@ const defaultFaqs: FaqItem[] = [
   {
     id: "faq-4",
     question: "Haritadaki veriler gerçek zamanlı mı?",
-    answer: "Haritadaki tüm durak, enerji üretimi ve batarya verileri pilot konsept simülasyonudur. Gerçek donanım bağlantısı sonraki aşamada planlanmaktadır."
+    answer: "Haritadaki tüm durak, enerji üretimi ve batarya verileri referans senaryo ve konsept simülasyonudur. Sahadaki gerçek fiziksel batarya, PV ve şebeke donanım bağlantısı sonraki aşamada planlanmaktadır."
   },
   {
     id: "faq-5",
@@ -42,7 +42,7 @@ const defaultFaqs: FaqItem[] = [
   {
     id: "faq-7",
     question: "Şebekeye enerji aktarımı nasıl olur?",
-    answer: "Şebeke aktarımı; ilgili mevzuat, dağıtım şirketi bağlantısı ve teknik uygunluğa bağlı planlanan özelliktir. Fazla üretilen temiz enerjinin çift yönlü sayaçla mikro şebekeye verilmesi hedeflenmektedir."
+    answer: "Şebeke aktarımı; ilgili mevzuat, dağıtım şirketi bağlantısı ve teknik uygunluğa bağlı planlanan bir özelliktir. Fazla üretilen temiz enerjinin çift yönlü sayaçla mikro şebekeye verilmesi hedeflenmektedir."
   },
   {
     id: "faq-8",

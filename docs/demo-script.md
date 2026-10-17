@@ -1,21 +1,21 @@
-# BeeHive - Jüri Sunumu & Canlı Demo Senaryosu (3-5 Dakika)
+# BeeHive - Müşteri & Yatırımcı Demo Senaryosu (3-5 Dakika)
 
-Bu senaryo, Konya Akıllı Şehir jürisine projenin değer önerisini, teknik güvenlik ayrıntılarını ve canlı arayüzlerini 3 ila 5 dakika içinde eksiksiz anlatmak için hazırlanmıştır.
+Bu senaryo, belediye yetkililerine, iş ortaklarına ve yatırımcılara projenin değer önerisini, teknik güvenlik ayrıntılarını ve canlı arayüzlerini 3 ila 5 dakika içinde eksiksiz anlatmak için hazırlanmıştır.
 
 ---
 
 ## ⏱️ Süre Dağılımı ve Akış Planı
 
 * **00:00 - 00:45 | Giriş:** Problem ve Döngüsel Ekonomi Fırsatı
-* **00:45 - 01:45 | Halk Portalı & Canlı Şehir Haritası:** Kullanıcı Deneyimi & Şeffaflık
-* **01:45 - 03:00 | Yönetici Paneli & Donanım Güvenliği:** Telemetri, Güvenli Kabin, İzolasyon & AI Asistanı
+* **00:45 - 01:45 | Halk Portalı & Şehir Haritası:** Kullanıcı Deneyimi & Şeffaflık
+* **01:45 - 03:00 | İşletme Yönetim Paneli & Donanım Güvenliği:** Telemetri, Güvenli Kabin, İzolasyon & Enerji Karar Destek Algoritması
 * **03:00 - 03:45 | Teknik Güvence & Otomatik Testler:** Sıfır Sızıntı & Mühendislik Doğrulaması
-* **03:45 - 04:00 | Kapanış & Soru-Cevap**
+* **03:45 - 04:00 | Kapanış & İş Birliği**
 
 ---
 
 ### Bölüm 1: Problem & Değer Önerisi (00:00 - 00:45)
-> *"Sayın jüri üyeleri; elektrikli araç dönüşümü hızla yaygınlaşırken, kapasitesi %75-80 bandına düşen milyonlarca batarya modülü erken hurdaya ayrılma riskiyle karşı karşıya. BeeHive olarak biz, bu bataryaları Konya'nın yoğun akıllı duraklarına entegre ederek hem ikinci yaşam sabit enerji depolaması sağlıyor, hem de çatı tipi güneş panelleriyle şebekeden bağımsız çalışan, kesintisiz şarj ve iklimlendirme sunan döngüsel bir kent mobilyası ekosistemi kuruyoruz."*
+> *"Değerli paydaşlar; elektrikli araç dönüşümü hızla yaygınlaşırken, araç menzili için yetersiz hale gelen milyonlarca batarya modülü erken hurdaya ayrılma riskiyle karşı karşıya. BeeHive olarak biz, bu bataryaları şehirlerin akıllı duraklarına entegre ederek hem ikinci yaşam sabit enerji depolaması sağlıyor, hem de çatı tipi güneş panelleriyle çalışan, kesintisiz şarj ve iklimlendirme sunan döngüsel bir kent altyapısı ekosistemi kuruyoruz."*
 
 ---
 

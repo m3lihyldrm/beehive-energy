@@ -74,6 +74,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 text-[#5D665E] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
+              id="station-search"
+              aria-label="Durak adı veya koduna göre ara"
               type="text"
               value={filters.searchQuery}
               onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
@@ -83,7 +85,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             {filters.searchQuery && (
               <button
                 onClick={() => setFilters(prev => ({ ...prev, searchQuery: '' }))}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#5D665E] hover:text-[#182019]"
+                aria-label="Aramayı temizle"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#5D665E] hover:text-[#182019] p-1"
               >
                 ✕
               </button>
@@ -99,6 +102,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             {hasActiveFilters && (
               <button
                 onClick={resetFilters}
+                aria-label="Tüm filtreleri sıfırla"
                 className="flex items-center gap-1 px-2.5 py-1 text-xs text-[#B94040] hover:bg-[#FCECEC] rounded-lg transition-colors font-medium border border-[#B94040]/20"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -110,6 +114,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <div className="flex items-center bg-[#EFF0EB] p-0.5 rounded-lg border border-[#DDE1DA]">
               <button
                 onClick={() => setViewMode('map')}
+                aria-label="Harita görünümüne geç"
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   viewMode === 'map'
                     ? 'bg-white text-[#182019] shadow-subtle font-semibold'
@@ -122,6 +127,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               </button>
               <button
                 onClick={() => setViewMode('list')}
+                aria-label="Liste görünümüne geç"
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   viewMode === 'list'
                     ? 'bg-white text-[#182019] shadow-subtle font-semibold'
@@ -137,21 +143,21 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </div>
 
         {/* Alt Sıra: Filtre Butonları (Yatay ve Dokunmatik Uyumlu) */}
+        {/* Alt Sıra: Filtre Butonları (Yatay ve Dokunmatik Uyumlu) */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-          {/* En Yakındaki Durağı Göster */}
+          {/* Tümü */}
           <button
-            onClick={onTriggerNearest}
+            onClick={resetFilters}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 border transition-all ${
-              isNearestActive
+              !hasActiveFilters
                 ? 'bg-[#1F5A43] text-white border-[#1F5A43] font-semibold shadow-subtle'
-                : 'bg-white text-[#182019] border-[#DDE1DA] hover:border-[#1F5A43]/40 hover:bg-[#F6F6F2]'
+                : 'bg-white text-[#5D665E] border-[#DDE1DA] hover:text-[#182019] hover:bg-[#F6F6F2]'
             }`}
           >
-            <Navigation className={`w-3.5 h-3.5 ${isNearestActive ? 'text-white' : 'text-[#1F5A43]'}`} />
-            <span>En Yakındaki Durağı Göster</span>
+            <span>Tümü</span>
           </button>
 
-          {/* Sadece Aktif Duraklar */}
+          {/* Aktif */}
           <button
             onClick={() => toggleFilter('onlyActive')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 border transition-all ${
@@ -161,10 +167,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             }`}
           >
             <CheckCircle className="w-3.5 h-3.5 text-[#1F5A43]" />
-            <span>Sadece Aktif Duraklar</span>
+            <span>Aktif</span>
           </button>
 
-          {/* Şarj Kullanılabilir */}
+          {/* USB-C (Şarj Kullanılabilir) */}
           <button
             onClick={() => toggleFilter('chargingAvailable')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 border transition-all ${
@@ -174,10 +180,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             }`}
           >
             <Zap className="w-3.5 h-3.5 text-[#1F5A43]" />
+            <span className="font-semibold">USB-C</span>
+            <span className="text-[11px]">/</span>
             <span>Şarj Kullanılabilir</span>
           </button>
 
-          {/* 220V Priz Aktif */}
+          {/* 220 V Priz */}
           <button
             onClick={() => toggleFilter('powerOutlet')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 border transition-all ${
@@ -187,10 +195,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             }`}
           >
             <Plug className="w-3.5 h-3.5 text-[#1F5A43]" />
-            <span>Priz Aktif</span>
+            <span>220 V Priz</span>
           </button>
 
-          {/* Kablosuz Şarj Aktif */}
+          {/* Qi Kablosuz */}
           <button
             onClick={() => toggleFilter('wirelessCharging')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 border transition-all ${
@@ -200,23 +208,34 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             }`}
           >
             <Wifi className="w-3.5 h-3.5 text-[#1F5A43]" />
-            <span>Kablosuz Şarj</span>
+            <span>Qi Kablosuz</span>
           </button>
 
-          {/* İklimlendirme Aktif */}
+          {/* LED Aydınlatma */}
           <button
-            onClick={() => toggleFilter('hvacActive')}
+            onClick={() => toggleFilter('ledLighting' as any)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 border transition-all ${
-              filters.hvacActive
-                ? 'bg-[#EAF2F6] text-[#416D86] border-[#416D86]/40 font-semibold'
+              filters.ledLighting
+                ? 'bg-[#E5F0EA] text-[#1F5A43] border-[#1F5A43]/40 font-semibold'
                 : 'bg-white text-[#5D665E] border-[#DDE1DA] hover:text-[#182019] hover:bg-[#F6F6F2]'
             }`}
           >
-            <Snowflake className="w-3.5 h-3.5 text-[#416D86]" />
-            <span>İklimlendirme</span>
+            <span>LED</span>
           </button>
 
-          {/* Engelli Erişimine Uygun */}
+          {/* Ekran */}
+          <button
+            onClick={() => toggleFilter('screenDisplay' as any)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 border transition-all ${
+              filters.screenDisplay
+                ? 'bg-[#E5F0EA] text-[#1F5A43] border-[#1F5A43]/40 font-semibold'
+                : 'bg-white text-[#5D665E] border-[#DDE1DA] hover:text-[#182019] hover:bg-[#F6F6F2]'
+            }`}
+          >
+            <span>Ekran</span>
+          </button>
+
+          {/* Erişilebilir */}
           <button
             onClick={() => toggleFilter('accessible')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 border transition-all ${

@@ -7,49 +7,123 @@ import {
   Lock,
   Menu,
   X,
-  Compass
+  Sparkles,
+  ArrowRight,
+  Layers,
+  Cpu,
+  Briefcase,
+  Mail
 } from 'lucide-react';
+import { useNavigate, useLocation, useInRouterContext, Link } from 'react-router-dom';
+import { BeeHiveLogo } from './BeeHiveLogo';
+import { trackEvent } from '../services/analytics';
 
-export type NavTab = 'home' | 'map' | 'how-it-works' | 'impact' | 'faq' | 'admin';
+export type NavTab =
+  | 'home'
+  | 'solution'
+  | 'technology'
+  | 'map'
+  | 'how-it-works'
+  | 'impact'
+  | 'business-model'
+  | 'faq'
+  | 'contact'
+  | 'admin'
+  | 'privacy'
+  | 'terms'
+  | 'cookies';
 
-interface NavbarProps {
-  currentTab: NavTab;
-  onNavigate: (tab: NavTab) => void;
-  onStartJuryTour?: () => void;
+export const TAB_ROUTES: Record<NavTab, string> = {
+  home: '/',
+  solution: '/cozum',
+  technology: '/teknoloji',
+  map: '/harita',
+  'how-it-works': '/nasil-calisir',
+  impact: '/etki',
+  'business-model': '/is-modeli',
+  faq: '/sss',
+  contact: '/iletisim',
+  admin: '/admin',
+  privacy: '/gizlilik-politikasi',
+  terms: '/kullanim-kosullari',
+  cookies: '/cerez-politikasi'
+};
+
+export const PATH_TO_TAB: Record<string, NavTab> = {
+  '/': 'home',
+  '/cozum': 'solution',
+  '/solution': 'solution',
+  '/teknoloji': 'technology',
+  '/technology': 'technology',
+  '/harita': 'map',
+  '/map': 'map',
+  '/nasil-calisir': 'how-it-works',
+  '/nasil': 'how-it-works',
+  '/etki': 'impact',
+  '/impact': 'impact',
+  '/is-modeli': 'business-model',
+  '/business-model': 'business-model',
+  '/sss': 'faq',
+  '/faq': 'faq',
+  '/iletisim': 'contact',
+  '/contact': 'contact',
+  '/admin': 'admin',
+  '/gizlilik-politikasi': 'privacy',
+  '/kullanim-kosullari': 'terms',
+  '/cerez-politikasi': 'cookies'
+};
+
+export interface NavbarProps {
+  currentTab?: NavTab;
+  onNavigate?: (tab: NavTab) => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({
-  currentTab,
-  onNavigate,
-  onStartJuryTour
+const NavbarInner: React.FC<NavbarProps> = ({
+  currentTab: propTab,
+  onNavigate
 }) => {
+  const inRouter = useInRouterContext();
+  const navigate = inRouter ? useNavigate() : null;
+  const location = useLocation ? (inRouter ? useLocation() : null) : null;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems = [
-    { id: 'home' as NavTab, label: 'Ana Sayfa' },
-    { id: 'map' as NavTab, label: 'Şehir Haritası', icon: MapPin },
-    { id: 'how-it-works' as NavTab, label: 'Nasıl Çalışır?', icon: HelpCircle },
-    { id: 'impact' as NavTab, label: 'Etki', icon: BarChart3 },
-    { id: 'faq' as NavTab, label: 'SSS', icon: MessageCircleQuestion },
+  // Router path'i ile sekme senkronizasyonu
+  const activeTab: NavTab =
+    propTab || (location ? PATH_TO_TAB[location.pathname.toLowerCase()] || 'home' : 'home');
+
+  const navItems: { id: NavTab; label: string; path: string }[] = [
+    { id: 'home', label: 'Ana Sayfa', path: '/' },
+    { id: 'solution', label: 'Çözüm', path: '/cozum' },
+    { id: 'technology', label: 'Teknoloji', path: '/teknoloji' },
+    { id: 'map', label: 'Şehir Haritası', path: '/harita' },
+    { id: 'impact', label: 'Etki', path: '/etki' },
+    { id: 'business-model', label: 'İş Modeli', path: '/is-modeli' },
+    { id: 'faq', label: 'SSS', path: '/sss' },
+    { id: 'contact', label: 'İletişim', path: '/iletisim' }
   ];
 
   const handleItemClick = (tab: NavTab) => {
-    onNavigate(tab);
     setMobileMenuOpen(false);
+    if (onNavigate) {
+      onNavigate(tab);
+    }
+    if (navigate) {
+      navigate(TAB_ROUTES[tab]);
+    }
   };
 
   return (
     <>
-      {/* SAKİN BİLGİLENDİRME BANDI (Açık taş tonu, şeffaflık uyarısı) */}
+      {/* SAKİN BİLGİLENDİRME BANDI */}
       <div className="bg-[#EFF0EB] border-b border-[#DDE1DA] text-xs py-1.5 px-4 sm:px-6 text-[#5D665E] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-[#1F5A43]" />
-          <span className="font-medium text-[#182019]">Pilot arayüz</span>
+          <span className="font-semibold text-[#182019]">Pilot Arayüz</span>
           <span>·</span>
-          <span>Gösterilen veriler simülasyon amaçlıdır.</span>
+          <span>Gösterilen telemetri ve etki değerleri konsept simülasyonudur.</span>
         </div>
         <div className="text-[11px] hidden sm:block text-[#5D665E]">
-          Konya Akıllı Şehir & Döngüsel Altyapı
+          Konya Pilot Bölgesi · Modüler Enerji Altyapısı
         </div>
       </div>
 
@@ -58,38 +132,49 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* LOGO */}
-            <button
-              onClick={() => handleItemClick('home')}
-              className="flex items-center gap-2.5 group text-left focus:outline-none"
-            >
-              {/* Minimal döngü + yaprak çizgisi */}
-              <div className="w-8 h-8 rounded-lg bg-[#E5F0EA] border border-[#1F5A43]/20 flex items-center justify-center text-[#1F5A43] group-hover:bg-[#1F5A43] group-hover:text-white transition-colors">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12" />
-                  <path d="M12 6v6l4 2" />
-                  <path d="M16 2v4h4" />
-                </svg>
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-baseline">
-                  <span className="text-base font-bold tracking-tight text-[#182019]">BeeHive</span>
-                  <span className="text-xs font-semibold text-[#1F5A43] ml-1">Energy</span>
-                </div>
-                <span className="text-[10px] text-[#5D665E] hidden md:block -mt-0.5">
-                  Enerjiyi paylaşan şehir altyapısı
-                </span>
-              </div>
-            </button>
+            {inRouter ? (
+              <Link
+                to="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="group focus:outline-none"
+              >
+                <BeeHiveLogo size="md" subtext="İkinci Yaşam Enerji" />
+              </Link>
+            ) : (
+              <button
+                onClick={() => handleItemClick('home')}
+                className="group focus:outline-none text-left"
+              >
+                <BeeHiveLogo size="md" subtext="İkinci Yaşam Enerji" />
+              </button>
+            )}
 
             {/* MASAÜSTÜ MENÜ */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
-                const isActive = currentTab === item.id;
+                const isActive = activeTab === item.id;
+                if (inRouter) {
+                  return (
+                    <Link
+                      key={item.id}
+                      to={item.path}
+                      onClick={() => onNavigate && onNavigate(item.id)}
+                      className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                        isActive
+                          ? 'bg-[#E5F0EA] text-[#1F5A43] font-semibold'
+                          : 'text-[#5D665E] hover:text-[#182019] hover:bg-[#F6F6F2]'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
+
                 return (
                   <button
                     key={item.id}
                     onClick={() => handleItemClick(item.id)}
-                    className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                    className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                       isActive
                         ? 'bg-[#E5F0EA] text-[#1F5A43] font-semibold'
                         : 'text-[#5D665E] hover:text-[#182019] hover:bg-[#F6F6F2]'
@@ -101,50 +186,53 @@ export const Navbar: React.FC<NavbarProps> = ({
               })}
             </nav>
 
-            {/* SAĞ: JÜRİ SUNUMU & YÖNETİCİ GİRİŞİ BAĞLANTISI */}
-            <div className="hidden md:flex items-center gap-2.5">
-              {onStartJuryTour && (
-                <button
-                  onClick={onStartJuryTour}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-[#1F5A43]/40 bg-[#E5F0EA] text-[#1F5A43] hover:bg-[#1F5A43] hover:text-white transition-all flex items-center gap-1.5 font-medium shadow-2xs"
-                  title="Jüri için 3 dakikalık rehberli proje demosu"
+            {/* SAĞ: DEMO TALEBİ CTA BUTONU */}
+            <div className="hidden lg:flex items-center gap-3">
+              {inRouter ? (
+                <Link
+                  to="/iletisim"
+                  onClick={() => trackEvent('demo_request_cta_clicked', { source: 'navbar_desktop' })}
+                  className="px-4 py-2 rounded-xl bg-[#1F5A43] hover:bg-[#184835] text-white text-xs font-bold transition-all shadow-sm inline-flex items-center gap-1.5 focus:ring-2 focus:ring-[#1F5A43] focus:outline-none"
                 >
-                  <Compass className="w-3.5 h-3.5" />
-                  <span>Jüri Sunumu</span>
+                  <Sparkles className="w-3.5 h-3.5 text-[#D59B2E]" />
+                  <span>Demo Talebi</span>
+                </Link>
+              ) : (
+                <button
+                  onClick={() => {
+                    trackEvent('demo_request_cta_clicked', { source: 'navbar_desktop' });
+                    handleItemClick('contact');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#1F5A43] hover:bg-[#184835] text-white text-xs font-bold transition-all shadow-sm inline-flex items-center gap-1.5 focus:ring-2 focus:ring-[#1F5A43] focus:outline-none"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#D59B2E]" />
+                  <span>Demo Talebi</span>
                 </button>
               )}
-              <button
-                onClick={() => handleItemClick('admin')}
-                className={`text-xs px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 ${
-                  currentTab === 'admin'
-                    ? 'bg-[#1F5A43] text-white border-[#1F5A43]'
-                    : 'text-[#5D665E] border-[#DDE1DA] hover:text-[#182019] hover:border-[#CBD3C8] hover:bg-[#F6F6F2]'
-                }`}
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span>Yönetici Girişi</span>
-              </button>
             </div>
 
-            {/* MOBİL MENÜ BUTONU */}
-            <div className="flex md:hidden items-center gap-2">
-              {onStartJuryTour && (
-                <button
-                  onClick={onStartJuryTour}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#1F5A43] bg-[#E5F0EA] border border-[#1F5A43]/40 flex items-center gap-1"
-                  title="Jüri Sunumu"
+            {/* MOBİL VE ORTA EKRAN MENÜ BUTONU */}
+            <div className="flex lg:hidden items-center gap-2">
+              {inRouter ? (
+                <Link
+                  to="/iletisim"
+                  onClick={() => trackEvent('demo_request_cta_clicked', { source: 'navbar_mobile' })}
+                  className="px-3 py-1.5 rounded-lg bg-[#1F5A43] text-white text-xs font-bold flex items-center gap-1 min-h-[36px]"
                 >
-                  <Compass className="w-3.5 h-3.5" />
-                  <span>Jüri Sunumu</span>
+                  <span>Demo Talebi</span>
+                </Link>
+              ) : (
+                <button
+                  onClick={() => {
+                    trackEvent('demo_request_cta_clicked', { source: 'navbar_mobile' });
+                    handleItemClick('contact');
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#1F5A43] text-white text-xs font-bold flex items-center gap-1 min-h-[36px]"
+                >
+                  <span>Demo Talebi</span>
                 </button>
               )}
-              <button
-                onClick={() => handleItemClick('admin')}
-                className="p-1.5 rounded-lg text-xs text-[#5D665E] border border-[#DDE1DA]"
-                title="Yönetici Girişi"
-              >
-                <Lock className="w-4 h-4" />
-              </button>
+
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 rounded-lg text-[#182019] hover:bg-[#F6F6F2] border border-[#DDE1DA] focus:outline-none"
@@ -158,28 +246,29 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* MOBİL AÇILIR MENÜ */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[#DDE1DA] bg-white px-4 pt-2 pb-4 space-y-1 shadow-subtle">
-            {onStartJuryTour && (
-              <div className="pb-2 mb-1 border-b border-[#DDE1DA]">
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    onStartJuryTour();
-                  }}
-                  className="w-full text-left px-3.5 py-2.5 rounded-lg text-sm bg-[#E5F0EA] text-[#1F5A43] font-semibold flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <Compass className="w-4 h-4" />
-                    <span>Jüri Sunumu Rehberi</span>
-                  </div>
-                  <span className="text-[10px] uppercase font-mono tracking-wider bg-white/80 px-1.5 py-0.5 rounded text-[#1F5A43] border border-[#1F5A43]/20">
-                    3 Dk Demo
-                  </span>
-                </button>
-              </div>
-            )}
+          <div className="lg:hidden border-t border-[#DDE1DA] bg-white px-4 pt-2 pb-5 space-y-1 shadow-subtle">
             {navItems.map((item) => {
-              const isActive = currentTab === item.id;
+              const isActive = activeTab === item.id;
+              if (inRouter) {
+                return (
+                  <Link
+                    key={item.id}
+                    to={item.path}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      if (onNavigate) onNavigate(item.id);
+                    }}
+                    className={`block w-full text-left px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-[#E5F0EA] text-[#1F5A43] font-semibold'
+                        : 'text-[#5D665E] hover:text-[#182019] hover:bg-[#F6F6F2]'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
+
               return (
                 <button
                   key={item.id}
@@ -194,18 +283,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               );
             })}
-            <div className="pt-2 border-t border-[#DDE1DA]">
-              <button
-                onClick={() => handleItemClick('admin')}
-                className="w-full text-left px-3.5 py-2.5 rounded-lg text-sm text-[#5D665E] hover:text-[#182019] flex items-center justify-between"
-              >
-                <span>Yönetici Girişi</span>
-                <Lock className="w-4 h-4 text-[#5D665E]" />
-              </button>
-            </div>
           </div>
         )}
       </header>
     </>
   );
 };
+
+export const Navbar: React.FC<NavbarProps> = (props) => {
+  return <NavbarInner {...props} />;
+};
+
+export default Navbar;

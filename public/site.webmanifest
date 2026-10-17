@@ -1,0 +1,17 @@
+{
+  "name": "BeeHive - İkinci Yaşam Enerjiden Akıllı Şehirlere",
+  "short_name": "BeeHive",
+  "description": "İkinci yaşam elektrikli araç bataryaları ve güneş enerjisiyle donatılmış modüler kent altyapısı.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F6F6F2",
+  "theme_color": "#1F5A43",
+  "icons": [
+    {
+      "src": "/beehive.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

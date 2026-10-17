@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import app, { DEMO_ADMIN_TOKEN, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../server/index.js';
 
-describe('CircularCity Energy Backend API Testleri', () => {
+describe('BeeHive Backend API Testleri', () => {
   // 1. Public durak listeleme endpointi
   describe('1. Public Durak Listeleme Endpointi (GET /api/public/stations)', () => {
     it('Halk endpointi 6 pilot durağı ve simülasyon etiketini döner (200 OK)', async () => {
@@ -77,7 +77,7 @@ describe('CircularCity Energy Backend API Testleri', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.token).toBe(DEMO_ADMIN_TOKEN);
-      expect(res.body.accountNotice).toBe('Yalnızca Jüri Demo Hesabı');
+      expect(res.body.accountNotice).toBe('Yetkili Operasyon Hesabı');
     });
 
     it('Hatalı şifrede 401 döner', async () => {
@@ -177,6 +177,96 @@ describe('CircularCity Energy Backend API Testleri', () => {
       expect(res.body.disclaimer).toBe('Demo / Simülasyon – Gerçek fiziksel donanıma komut gönderilmez.');
       expect(res.body.batteryState).toBe('İzolasyona alındı');
       expect(res.body.logEntry.type).toBe('BATTERY_ISOLATION_MOCK');
+    });
+  });
+
+  // 9. Demo Talebi ve İletişim Formu (POST /api/contact/demo-request)
+  describe('9. Demo Talebi ve İletişim Formu (POST /api/contact/demo-request)', () => {
+    it('Geçerli demo talebini kaydeder, 201 Created döner ve takip kimliği üretir', async () => {
+      const res = await request(app)
+        .post('/api/contact/demo-request')
+        .send({
+          fullName: 'Ahmet Yılmaz',
+          organization: 'Konya Büyükşehir Belediyesi',
+          email: 'ahmet.yilmaz@konya.bel.tr',
+          organizationType: 'belediye',
+          interest: 'pilot',
+          message: 'Akıllı durak enerji çözümü için detaylı bir demo toplantısı talep ediyoruz.'
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain('Talebiniz alındı');
+      expect(res.body.requestId).toMatch(/^DEMO-/);
+    });
+
+    it('Eksik ad-soyad ile yapılan istekte 400 döner', async () => {
+      const res = await request(app)
+        .post('/api/contact/demo-request')
+        .send({
+          fullName: '',
+          organization: 'Konya Büyükşehir Belediyesi',
+          email: 'ahmet@konya.bel.tr',
+          organizationType: 'belediye',
+          message: 'Akıllı durak enerji çözümü için detaylı bir demo toplantısı talep ediyoruz.'
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.details).toContain('fullName zorunludur.');
+    });
+
+    it('Geçersiz e-posta formatında 400 döner', async () => {
+      const res = await request(app)
+        .post('/api/contact/demo-request')
+        .send({
+          fullName: 'Ahmet Yılmaz',
+          organization: 'Konya Büyükşehir Belediyesi',
+          email: 'gecersiz-eposta',
+          organizationType: 'belediye',
+          message: 'Akıllı durak enerji çözümü için detaylı bir demo toplantısı talep ediyoruz.'
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.details).toContain('email geçerli formatta zorunludur.');
+    });
+
+    it('20 karakterden kısa mesaj ile yapılan istekte 400 döner', async () => {
+      const res = await request(app)
+        .post('/api/contact/demo-request')
+        .send({
+          fullName: 'Ahmet Yılmaz',
+          organization: 'Konya Büyükşehir Belediyesi',
+          email: 'ahmet@konya.bel.tr',
+          organizationType: 'belediye',
+          message: 'Kısa mesaj.'
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.details).toContain('message en az 20 karakter zorunludur.');
+    });
+  });
+
+  // 10. Admin Raporlama Endpointi (GET /api/admin/reports)
+  describe('10. Admin Raporlama Endpointi (GET /api/admin/reports)', () => {
+    it('Yetkisiz istekte 401 Unauthorized döner', async () => {
+      const res = await request(app).get('/api/admin/reports');
+      expect(res.status).toBe(401);
+    });
+
+    it('Yetkili istekte günlük enerji, batarya sağlığı ve etki özetini döner (200 OK)', async () => {
+      const res = await request(app)
+        .get('/api/admin/reports')
+        .set('Authorization', `Bearer ${DEMO_ADMIN_TOKEN}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.dailyEnergy)).toBe(true);
+      expect(Array.isArray(res.body.batteryHealth)).toBe(true);
+      expect(res.body.impactSummary).toBeDefined();
+      expect(res.body.impactSummary.circularBatteryCount).toBeGreaterThan(0);
     });
   });
 });
